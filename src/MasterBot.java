@@ -182,7 +182,8 @@ public class MasterBot {
                         //System.out.println("Start to write cmd <" + consolCmd + ">to slave via socket:;" + slaveIp + "; ");
                         writer.println(consolCmd);
                         System.out.println("Write cmd <" + consolCmd + "> to slave:"+slaveIp+";");
-                        writer.close();
+                        writer.flush();
+                        //writer.close();
                     }
                 }
             } catch (Exception ex){
