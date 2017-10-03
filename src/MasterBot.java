@@ -40,14 +40,13 @@ public class MasterBot {
      *         3) disconnect;
      */
     public static void main(String[] args) throws IOException {
-        //Receive "-p" option for master port.
-        String iparam_0 = args[0] ;
-
         //Check parameters sanity
         if ( args.length != 2){
             System.out.println("Illegal Parameters sets; You should input format: MaterBot -p/P <srcPort>");
             System.exit(1);
         }
+        //Receive "-p" option for master port.
+        String iparam_0 = args[0] ;
         if ( !iparam_0.equalsIgnoreCase("-p") ){
             System.out.println("Invalid Parameter : " + args[0] + " ; You should input format: MaterBot -p/P <srcPort>");
             System.exit(1);

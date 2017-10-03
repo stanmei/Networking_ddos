@@ -34,13 +34,13 @@ public class SlaveBot {
      */
     public static void main(String[] args){
 
-        //Receive "-p" option for master port.
-        String iparam_0 = args[0] ;
-        String iparam_1 = args[2] ;
         if ( args.length != 4 ) {
             System.out.println("Ilegal Parameter set; You should input format: SlaveBot -h <ip|hostname> -p <srcPort>");
             System.exit(1);
         }
+        //Receive "-p" option for master port.
+        String iparam_0 = args[0] ;
+        String iparam_1 = args[2] ;
         if ( !iparam_0.equalsIgnoreCase("-h") ){
             System.out.println("Invalid Parameter : " + iparam_0 + " ; You should input format: SlaveBot -h <ip|hostname> -p <srcPort>");
             System.exit(1);
