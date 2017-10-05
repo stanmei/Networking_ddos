@@ -120,7 +120,7 @@ public class SlaveBot {
                             System.out.println("Fail: Invalid commands received from master!");
                         }
 
-                        System.out.println("---------------List after cmd " + cmd + "--------------------------");
+                        System.out.println("---------------List after cmd <" + cmd + ">--------------------------");
                         printTgtConns();
                     }
                 } catch (Exception ex) {
@@ -185,10 +185,12 @@ public class SlaveBot {
                 System.out.println("Slave delete target connnections:"+ tgtAddr+" "+tgtPortStr);
                 // Not expected address, just break.
                 if ( tgt.getAddr() != tgtAddr )  {
+                    System.out.println("Slave no match address:"+tgt.getAddr()+" "+tgt.getPort());
                     break;
                 }
                 // Not expected port, just break.
                 if (( !tgtPortStr.equalsIgnoreCase("all")) && (tgt.getPort() != Integer.parseInt(tgtPortStr)) ) {
+                    System.out.println("Slave no match port:"+tgt.getAddr()+" "+tgt.getPort());
                     break;
                 }
 
@@ -261,7 +263,7 @@ public class SlaveBot {
                System.out.println("         Empty");
            }else {
                for (Socket sock : sockSet) {
-                   System.out.println("      from port :" + sock.getPort());
+                   System.out.println("      from port :" + sock.getLocalPort());
                }
            }
            System.out.println("");

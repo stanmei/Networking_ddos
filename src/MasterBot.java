@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.net.*;
 import java.text.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class MasterBot {
@@ -28,9 +29,10 @@ public class MasterBot {
     static int srcPort = 0;
 
     ServerSocket serverSock ;
-    /*HashSet : to store slave's information with key(slave hostname+src port).
+    /*ConcurrentList : to store slave's information with key(slave hostname+src port).
      */
-    HashSet <Host> slaveset = new HashSet<Host> ();
+    //HashSet <Host> slaveset = new HashSet<Host> ();
+    CopyOnWriteArrayList <Host> slaveset = new CopyOnWriteArrayList<>();
 
     /* main
      * Display ">" on terminal. Then
@@ -200,10 +202,18 @@ public class MasterBot {
                 if ( foundClosedConn==1) {
                     System.out.println("Remoing closed slave:"+curSlave.ipAddr+" "+curSlave.srcPort);
 
+                    /*
                     for (Iterator <Host> it= slaveset.iterator();it.hasNext();) {
                         Host element = it.next();
                         if ( (element.ipAddr==curSlave.ipAddr) && (element.srcPort==curSlave.srcPort) ) {
                             it.remove();
+                        }
+                    }
+                    */
+                    for (int idx=0;idx<slaveset.size();idx++) {
+                        Host element = slaveset.get(idx);
+                        if ( (element.ipAddr==curSlave.ipAddr) && (element.srcPort==curSlave.srcPort) ) {
+                            slaveset.remove(idx);
                         }
                     }
                 }
