@@ -184,8 +184,8 @@ public class SlaveBot {
             for (Tgt tgt : tgtSet) {
                 System.out.println("Slave delete target connnections:"+ tgtAddr+" "+tgtPortStr);
                 // Not expected address, just break.
-                if ( tgt.getAddr() != tgtAddr )  {
-                    System.out.println("Slave no match address:"+tgt.getAddr()+" "+tgt.getPort());
+                if (! tgtAddr.equals(tgt.getAddr()) )  {
+                    System.out.println("Slave no match address:"+tgt.getAddr()+" : "+tgtAddr);
                     break;
                 }
                 // Not expected port, just break.
