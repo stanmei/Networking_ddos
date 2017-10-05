@@ -150,7 +150,8 @@ public class SlaveBot {
             //Traverse tagets set to check whehther already exised.
             int found = 0;
             for (Tgt tgt: tgtSet) {
-                if ( (tgt.getAddr()==tgtAddr) && (tgt.getPort()==tgtPort)) {
+                //if ( (tgt.getAddr()==tgtAddr) && (tgt.getPort()==tgtPort)) {
+                if ( tgtAddr.equals(tgt.getAddr()) && (tgt.getPort()==tgtPort)) {
                     tgt.sockSet.addAll(newSockSet);
                     found=1;
                     break;
@@ -184,7 +185,7 @@ public class SlaveBot {
             for (Tgt tgt : tgtSet) {
                 System.out.println("Slave delete target connnections:"+ tgtAddr+" "+tgtPortStr);
                 // Not expected address, just break.
-                if (! tgtAddr.equals(tgt.getAddr()) )  {
+                if (!tgtAddr.equals(tgt.getAddr()) )  {
                     System.out.println("Slave no match address:"+tgt.getAddr()+" : "+tgtAddr);
                     break;
                 }
