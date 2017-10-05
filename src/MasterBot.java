@@ -152,6 +152,7 @@ public class MasterBot {
          * 2) all : all slaves in "slaveset" list.
          */
         public void slaveConnTx (String consolCmd,String[] splitCmd) {
+            int foundClosedConn = 0;
             try {
                 String slaveIp = null ;
                 String slaveName = null;
@@ -164,14 +165,17 @@ public class MasterBot {
                 }
 
                 //System.out.println ("user input addr:  "+slaveIp+ "; slaveNmae: "+ slaveName) ;
+                Host curSlave = new Host () ;
                 Socket Sock =null ;
                 for ( Host slave : slaveset ) {
                     //System.out.println ("Query list, ipaddr:  "+slave.ipAddr+ "; srcPort: "+slave.srcPort) ;
                     if (slaveIp.equals("all")) {
                         Sock = slave.slaveSock;
+                        curSlave= slave ;
                     }else if (slave.ipAddr.equals(slaveIp)) {
                         //System.out.println("Found:  " + slave.ipAddr + "; " + slave.srcPort);
                         Sock = slave.slaveSock;
+                        curSlave= slave ;
                     } else {
                         Sock =null;
                     }
@@ -180,9 +184,27 @@ public class MasterBot {
                         PrintWriter writer = new PrintWriter(Sock.getOutputStream());
                         //System.out.println("Start to write cmd <" + consolCmd + ">to slave via socket:;" + slaveIp + "; ");
                         writer.println(consolCmd);
-                        System.out.println("Write cmd <" + consolCmd + "> to slave:"+slaveIp+";");
+                        if ( writer.checkError()) {
+                            System.out.println("Remote slave no responses , when : Write cmd <" + consolCmd + "> to slave:" + slaveIp + ";");
+                            foundClosedConn = 1;
+                            break;
+                        } else {
+                            System.out.println("Write cmd <" + consolCmd + "> to slave:" + slaveIp + ";");
+                        }
                         writer.flush();
                         //writer.close();
+                    }
+                }
+
+                //Remove closed connections from slave
+                if ( foundClosedConn==1) {
+                    System.out.println("Remoing closed slave:"+curSlave.ipAddr+" "+curSlave.srcPort);
+
+                    for (Iterator <Host> it= slaveset.iterator();it.hasNext();) {
+                        Host element = it.next();
+                        if ( (element.ipAddr==curSlave.ipAddr) && (element.srcPort==curSlave.srcPort) ) {
+                            it.remove();
+                        }
                     }
                 }
             } catch (Exception ex){
