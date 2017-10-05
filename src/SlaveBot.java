@@ -86,7 +86,8 @@ public class SlaveBot {
             String [] splitcmd = null;
             String cmd = null;
             String tgtName = null ;
-            int tgtPort =0  ;
+            String tgtPortStr = null  ;
+            int tgtPort = 0  ;
             int numConn =1  ;
             InetAddress ipAddr ;
 
@@ -99,7 +100,11 @@ public class SlaveBot {
                         cmd = splitcmd[0];
                         tgtName = splitcmd[2];
                         ipAddr = InetAddress.getByName(tgtName);
-                        tgtPort = Integer.parseInt(splitcmd[3]);
+                        //tgtPort = Integer.parseInt(splitcmd[3]);
+                        tgtPortStr = splitcmd[3];
+                        if (!tgtPortStr.equalsIgnoreCase("all")){
+                            tgtPort = Integer.parseInt(splitcmd[3]);
+                        }
                         if (splitcmd.length == 5)
                             numConn = Integer.parseInt(splitcmd[4]);
 
@@ -108,14 +113,14 @@ public class SlaveBot {
                         }
                         //dis-connect command from master
                         else if (cmd.equalsIgnoreCase("disconnect")) {
-                            delConns(ipAddr, tgtPort, numConn);
+                            delConns(ipAddr, tgtPortStr);
                         }
                         //others
                         else {
                             System.out.println("Fail: Invalid commands received from master!");
                         }
 
-                        System.out.println("---------------" + cmd + "--------------------------");
+                        System.out.println("---------------List after cmd " + cmd + "--------------------------");
                         printTgtConns();
                     }
                 } catch (Exception ex) {
@@ -166,7 +171,7 @@ public class SlaveBot {
     /* methode : del target connections per master's "disconnect" commands.
      *
      */
-    public void delConns (InetAddress tgtAddr,int tgtPort,int numConns){
+    public void delConns (InetAddress tgtAddr,String tgtPortStr){
 
         if (tgtSet==null) {
             System.out.println ("Fail,Non-existed targt.");
@@ -177,28 +182,29 @@ public class SlaveBot {
         ArrayList <Socket> tgtConnSet = new ArrayList <Socket> () ;
         try {
             for (Tgt tgt : tgtSet) {
-                if ((tgt.getAddr() == tgtAddr) && (tgt.getPort() == tgtPort)) {
-                    tgtConnSet.addAll(tgt.sockSet);
-                    selTgt=tgt;
+                System.out.println("Slave delete target connnections:"+ tgtAddr+" "+tgtPortStr);
+                // Not expected address, just break.
+                if ( tgt.getAddr() != tgtAddr )  {
                     break;
                 }
-            }
-
-            if (tgtConnSet == null) {
-                System.out.println("Fail, No existed target be found!");
-                return;
-            } else {
-                //for (Socket sock : tgtConnSet) {
-                int curTgtConnSize=tgtConnSet.size();
-                for (int cnt=0;cnt< curTgtConnSize;cnt++) {
-                    Socket sock = tgtConnSet.get(0) ;
-                    sock.close();
-
-                    System.out.println("Closing Socket cnt:"+cnt+" "+sock.getInetAddress()+" "+sock.getPort());
-                    tgtConnSet.remove(sock);
-                    if ( (cnt+1) == numConns) break;
+                // Not expected port, just break.
+                if (( !tgtPortStr.equalsIgnoreCase("all")) && (tgt.getPort() != Integer.parseInt(tgtPortStr)) ) {
+                    break;
                 }
-                if (tgtConnSet.isEmpty()) {
+
+                //Expected sockets to disconnect.
+                tgtConnSet.addAll(tgt.sockSet);
+                selTgt=tgt;
+
+                if (tgtConnSet == null) {
+                    System.out.println("Fail, No existed target be found!");
+                    return;
+                } else {
+                    //for (Socket sock : tgtConnSet) {
+                    for (Socket sock : tgtConnSet) {
+                        System.out.println("Closing Socket:" + " " + sock.getInetAddress() + " " + sock.getPort());
+                        sock.close();
+                    }
                     System.out.println("Removing Target Socket:"+selTgt.getAddr()+" "+selTgt.getPort());
                     tgtSet.remove(selTgt) ;
                 }
