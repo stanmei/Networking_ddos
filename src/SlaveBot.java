@@ -356,9 +356,9 @@ public class SlaveBot {
            RandomizeObj randStr = new RandomizeObj ();
            String randomStr = randStr.getRandomStr(1,10);
            if (hostPort==443) {
-                return "https://"+tgtHostName+"/"+tgtHostPath+"="+randomStr;
+                return "https://"+tgtHostName+tgtHostPath+"="+randomStr;
            } else {
-               return "http://"+tgtHostName+"/"+tgtHostPath+"="+randomStr;
+               return "http://"+tgtHostName+tgtHostPath+"="+randomStr;
            }
        }
 
