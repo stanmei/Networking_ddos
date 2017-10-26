@@ -101,7 +101,11 @@ public class SlaveBot {
                         tgtName = splitcmd[2];
                         ipAddr = InetAddress.getByName(tgtName);
                         //tgtPort = Integer.parseInt(splitcmd[3]);
-                        tgtPortStr = splitcmd[3];
+                        if ( splitcmd.length>= 4) {
+                            tgtPortStr = splitcmd[3];
+                        } else {
+                            tgtPortStr = "all" ;
+                        }
 
                         //proj2 : add keepalive option in "connect"
                         boolean keepAlive=false ;
