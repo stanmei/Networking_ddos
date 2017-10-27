@@ -232,36 +232,54 @@ public class SlaveBot {
         }
         //Traverse tagets set to check whehther already exised.
         Tgt selTgt = null ;
-        ArrayList <Socket> tgtConnSet = new ArrayList <Socket> () ;
         try {
-            for (Tgt tgt : tgtSet) {
-                System.out.println("Slave delete target connnections:"+ tgtAddr+" "+tgtPortStr);
+            //Replace with manual iter to avoid concurrentexception.
+            //for (Tgt tgt : tgtSet) {
+            Iterator <Tgt> tgt_iter = tgtSet.iterator();
+            while (tgt_iter.hasNext()) {
+                selTgt = null ;
+                Tgt tgt = tgt_iter.next();
+                ArrayList <Socket> tgtConnSet = new ArrayList <Socket> () ;
+                System.out.println("Slave delete target connnections:"+ tgtAddr+" "+tgtPortStr+", Current deleting: "+ tgt.getAddr() +" "+tgt.getPort());
+
                 // Not expected address, just break.
                 if (!tgtAddr.equals(tgt.getAddr()) )  {
                     System.out.println("Slave no match address:"+tgt.getAddr()+" : "+tgtAddr);
-                    break;
+                    continue;
+                    //break;
                 }
+                /*
                 // Not expected port, just break.
                 if (( !tgtPortStr.equalsIgnoreCase("all")) && (tgt.getPort() != Integer.parseInt(tgtPortStr)) ) {
                     System.out.println("Slave no match port:"+tgt.getAddr()+" "+tgt.getPort());
                     break;
                 }
+                */
 
-                //Expected sockets to disconnect.
-                tgtConnSet.addAll(tgt.sockSet);
-                selTgt=tgt;
-
-                if (tgtConnSet == null) {
-                    System.out.println("Fail, No existed target be found!");
-                    return;
+                if ( (tgtPortStr.equalsIgnoreCase("all")) || (tgt.getPort() == Integer.parseInt(tgtPortStr)) ) {
+                    //Expected sockets to disconnect.
+                    System.out.println("Slave match addr+port:"+tgt.getAddr()+" "+tgt.getPort());
+                    tgtConnSet.addAll(tgt.sockSet);
+                    selTgt = tgt;
                 } else {
-                    //for (Socket sock : tgtConnSet) {
-                    for (Socket sock : tgtConnSet) {
-                        System.out.println("Closing Socket:" + " " + sock.getInetAddress() + " " + sock.getPort());
-                        sock.close();
+                    continue;
+                }
+
+                if ( selTgt != null ) {
+                    if (tgtConnSet == null) {
+                        System.out.println("Fail, No existed target be found!");
+                        return;
+                    } else {
+                        //replace with manual iter to avoid concurrentexception
+                        for (Socket sock : tgtConnSet) {
+                            System.out.println("Closing Socket:" + " " + sock.getInetAddress() + " " + sock.getPort()+" "+ sock.getLocalPort() );
+                            sock.close();
+                        }
+                        System.out.println("Removing Target Socket:" + selTgt.getAddr() + " " + selTgt.getPort());
+                        //replace with iterator to avoid concurrentexception
+                        //tgtSet.remove(selTgt);
+                        tgt_iter.remove();
                     }
-                    System.out.println("Removing Target Socket:"+selTgt.getAddr()+" "+selTgt.getPort());
-                    tgtSet.remove(selTgt) ;
                 }
             }
         } catch (Exception ex) {
