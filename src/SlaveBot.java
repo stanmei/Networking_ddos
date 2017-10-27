@@ -184,7 +184,14 @@ public class SlaveBot {
                     try {
                         URL link = new URL(webLink) ;
                         System.out.println("new url:" + webLink);
-                        link.openConnection();
+                        URLConnection urlLink = link.openConnection();
+                        //Clean response from url.
+                        BufferedReader inUrlLink = new BufferedReader(new InputStreamReader(urlLink.getInputStream()));
+                        String urlRspStr ;
+                        while ((urlRspStr =inUrlLink.readLine())!=null) {
+                            System.out.println ("Response from url :"+urlRspStr);
+                        }
+                        inUrlLink.close();
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
