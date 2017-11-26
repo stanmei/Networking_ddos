@@ -181,7 +181,7 @@ public class SlaveBot {
                         else if (cmd.equalsIgnoreCase("rise-fake-url" ) ) {
                             ServerSocket srvSock=isSrvPortUsing(tgtPort);
                             if (srvSock==null) {
-                                Thread t_url_conn = new Thread(new urlReqServer(tgtPort));
+                                Thread t_url_conn = new Thread(new urlReqServer(tgtName,tgtPort));
                                 t_url_conn.start();
                             }
                         }
@@ -371,15 +371,26 @@ public class SlaveBot {
      */
     public class urlReqServer implements Runnable {
         ServerSocket serverSock ;
+        String srvUrl ;
+        String srvUrlPageOne ;
+        String srvUrlPageTwo ;
+        String srvUrlFake ;
+
         int srvPort ;
         //constructor
-        urlReqServer(int port) {
+        urlReqServer(String srvName,int port) {
             try {
                 srvPort = port;
                 //serverSock = new ServerSocket(srvPort);
-                srvInst sInst = new srvInst(srvPort);
+                srvInst sInst = new srvInst(srvName,srvPort);
                 serverSock = sInst.srvSock ;
                 serverPortsSet.add(sInst);
+
+                srvUrl = sInst.url;
+                srvUrlPageOne = sInst.url+"page1";
+                srvUrlPageTwo = sInst.url+"page2";
+                srvUrlFake = sInst.url+"fake";
+
                 System.out.println("Listening for url connection from port :"+srvPort+"....");
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -397,42 +408,149 @@ public class SlaveBot {
                     PrintWriter outUrlRsp = new PrintWriter(client.getOutputStream()) ;
 
                     String urlReqStr ;
+                    String [] splitUrlReqStr = null;
+                    String [] splitUrlReqStrGet = null;
+                    boolean isPageHome = false;
+                    boolean isPageOne = false;
+                    boolean isPageTwo = false;
+                    //boolean isPageFake = false;
+                    int lineCnt = 0 ;
+                    boolean isIconReq = false ;
+
                     while ((urlReqStr =inUrlReq.readLine())!=null) {
                         if (urlReqStr.length() == 0 ) break;
                         System.out.println(urlReqStr);
+                        splitUrlReqStr=urlReqStr.split(": ");
+                        splitUrlReqStrGet=urlReqStr.split(" ");
+                        //Get param at line0
+                       if ((lineCnt==0)&& (splitUrlReqStrGet[1].equalsIgnoreCase("/")) ||
+                               (splitUrlReqStrGet[1].equalsIgnoreCase("/home"))){
+                            isPageHome = true;
+                        }
+                        if ((lineCnt==0)&&splitUrlReqStrGet[1].equalsIgnoreCase("/favicon.ico")) {
+                            isIconReq = true;
+                        }
+                        if ((lineCnt==0)&&splitUrlReqStrGet[1].equalsIgnoreCase("/page1")) {
+                            isPageOne = true;
+                        }
+                        if ((lineCnt==0)&&splitUrlReqStrGet[1].equalsIgnoreCase("/page2")) {
+                            isPageTwo = true;
+                        }
+                        // Http get : refere er line
+                        /*
+                        if ((isIconReq==true) && splitUrlReqStr[0].equalsIgnoreCase("Referer")) {
+                            //System.out.println("Referer_1:"+splitUrlReqStr[1]);
+                            if (splitUrlReqStr[1].equalsIgnoreCase(srvUrl)) {
+                                isPageHome = true;
+                                System.out.println("url home:"+srvUrl);
+                            } else if (splitUrlReqStr[1].equalsIgnoreCase(srvUrlPageOne)) {
+                                isPageOne = true;
+                                System.out.println("url page1:"+srvUrlPageOne);
+                            } else if (splitUrlReqStr[1].equalsIgnoreCase(srvUrlPageTwo)) {
+                                isPageTwo = true;
+                                System.out.println("url page2:"+srvUrlPageTwo);
+                           //} else if (splitUrlReqStr[1].equalsIgnoreCase(srvUrlFake)) {
+                           //     isPageFake = true;
+                            }
+                        }
+                        */
                     }
-                    outUrlRsp.println("HTTP/1.1 200 ");
-                    //outUrlRsp.println("Content-Type:text/plain ");
-                    outUrlRsp.println("Content-Type:text/html ");
-                    outUrlRsp.println("Content:close");
-                    outUrlRsp.println("");
-                    outUrlRsp.println("");
-                    //outUrlRsp.println("This is Important,Check this out!");
+                    System.out.println("isPageHome:" + isPageHome + " ; isPageOne:" + isPageOne + " ; isPageTwo:" + isPageTwo+"; isIconReq:"+isIconReq);
+                    System.out.println( );
 
-                    //String link="<a href='http://localhost:8080' target='_blank'>http://localhost:8080</a>";
-                    //outUrlRsp.println("<html>");
-                    //outUrlRsp.println("<body>");
-                    String link="<p> <a href=\"http://www.google.com\">Must to Check it out!</a> </p>";
-                    outUrlRsp.println(link);
-                    //outUrlRsp.println("</body>");
-                    //outUrlRsp.println("</html>");
-                    outUrlRsp.flush();
-                    /*
-                    outUrlRsp.flush();
-                    Date today= new Date();
-                    String httpRsp = "HTTP/1.1 200 OK\r\n\r\n"+today;
-                    client.getOutputStream().write(httpRsp.getBytes("UTF-8"));
-                    */
+                    //Response different pages
+                    if (isIconReq==false) {
+                        txPageHead(outUrlRsp);
+                        if (isPageHome == true) {
+                            txPageHome(outUrlRsp, srvUrl);
+                        } else if (isPageOne == true) {
+                            txPageFakeLink(outUrlRsp,srvUrl);
+                        } else if (isPageTwo == true) {
+                            txPageFakeLink(outUrlRsp,srvUrl);
+                        } else {
+                            //txPageErr(outUrlRsp);
+                            txPageHome(outUrlRsp, srvUrl);
+                        }
+                        System.out.println();
 
-                    inUrlReq.close();
-                    outUrlRsp.close();
-                    client.close();
+                        //outUrlRsp.flush();
+                    }
+
+                        inUrlReq.close();
+                        outUrlRsp.close();
+                        client.close();
                 }
             } catch (Exception ex) {
                 //ex.printStackTrace();
                 System.out.println("Catched runtime exception : socket closed at port");
             }
         }
+    }
+
+    public void txPageHead (PrintWriter outUrlRsp) {
+        outUrlRsp.println("HTTP/1.1 200 ");
+        //outUrlRsp.println("Content-Type:text/plain ");
+        outUrlRsp.println("Content-Type:text/html ");
+        outUrlRsp.println("Content:close");
+        outUrlRsp.println("");
+    }
+
+    public void txPageHome (PrintWriter outUrlRsp,String srvUrl) {
+        String link ;
+        /*
+        outUrlRsp.println("<nav>");
+        outUrlRsp.println("<ul>");
+        outUrlRsp.println("<li><strong>Home</strong></li>");
+        link = "<li> <a href=\"page1\">PageOne</a> </li>";
+        outUrlRsp.println(link);
+        link = "<li> <a href=\"page2\">PageTwo</a> </li>";
+        outUrlRsp.println(link);
+        outUrlRsp.println("</ul>");
+        outUrlRsp.println("</nav>");
+        */
+        //link = "<p> <a href=\"http://www.google.com\">Home-Must to Check it out!</a> </p>";
+        String pageUrl;
+        pageUrl = srvUrl+"page1";
+        link = "<p> <a href=\"" +
+                pageUrl +
+                "\">Home-Page one!</a> </p>";
+        outUrlRsp.println(link);
+        System.out.println("Printing Home Page.....:"+link);
+
+        pageUrl = srvUrl+"page2";
+        link = "<p> <a href=\"" +
+                pageUrl +
+                "\">Home-Page two!</a> </p>";
+        outUrlRsp.println(link);
+        System.out.println("Printing Home Page.....:"+link);
+        outUrlRsp.flush();
+    }
+
+    public void txPageFakeLink (PrintWriter outUrlRsp,String srvUrl) {
+        String link ;
+        link = "<p> <a href=\"http://www.google.com\">Must to Check it out!</a> </p>";
+        outUrlRsp.println(link);
+        outUrlRsp.println();
+        outUrlRsp.println();
+        outUrlRsp.println();
+        outUrlRsp.println();
+        outUrlRsp.println();
+        outUrlRsp.println();
+        String pageUrl;
+        pageUrl = srvUrl;
+        link = "<p> <a href=\"" +
+                pageUrl +
+                "\">Home</a> </p>";
+        outUrlRsp.println(link);
+
+        System.out.println("Printing Fake Page.....");
+        outUrlRsp.flush();
+    }
+
+    public void txPageErr (PrintWriter outUrlRsp) {
+        outUrlRsp.println("404 NOT FOUND!");
+        System.out.println("Printing Error Page.....");
+        outUrlRsp.flush();
     }
 
     /* Sub-class :  Tgt
@@ -537,11 +655,12 @@ public class SlaveBot {
         ServerSocket srvSock;
         String url = "";
 
-        srvInst(int port) {
+        srvInst(String srvName,int port) {
             srvPort = port;
 
             try {
                 srvSock = new ServerSocket(srvPort);
+                url ="http://"+srvName+":"+srvPort+"/";
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
