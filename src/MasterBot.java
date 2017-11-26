@@ -40,6 +40,8 @@ public class MasterBot {
      *         1) list ;
      *         2) connect ;
      *         3) disconnect;
+     *         4) rise-fake-url -p port -url [url] ;
+     *         5) down-fake-url -p port -url [url];
      */
     public static void main(String[] args) throws IOException {
         //Check parameters sanity
@@ -120,7 +122,12 @@ public class MasterBot {
                     } else if (splitCmd[0].equalsIgnoreCase("connect") ) {
                         slaveConnTx(consolCmd,splitCmd);
                     } else if (splitCmd[0].equalsIgnoreCase("disconnect")) {
-                        slaveConnTx(consolCmd,splitCmd);
+                        slaveConnTx(consolCmd, splitCmd);
+                    //Proj 3 : add fake url rise and down
+                    } else if (splitCmd[0].equalsIgnoreCase("rise-fake-url")) {
+                        slaveConnTx(consolCmd, splitCmd);
+                    } else if (splitCmd[0].equalsIgnoreCase("down-fake-url")) {
+                        slaveConnTx(consolCmd, splitCmd);
                     } else {
                         System.out.println ("Error, Unsupported command types. Current supported : list,connect,disconnect! Please double check and Re-input." );
                     }
@@ -158,12 +165,25 @@ public class MasterBot {
             try {
                 String slaveIp = null ;
                 String slaveName = null;
-                if (!splitCmd[1].equalsIgnoreCase("all")) {
+
+                slaveIp="all" ;
+                //Proj3 : add rise-fake-url/down-fake-url
+                boolean isConCmds = false;
+                boolean isFakeUrlCmds = false;
+                if (splitCmd[0].equalsIgnoreCase("connect") ||
+                    splitCmd[0].equalsIgnoreCase("disconnect") ) {
+                    isConCmds = true;
+                }
+                if (splitCmd[0].equalsIgnoreCase("rise-fake-url") ||
+                    splitCmd[0].equalsIgnoreCase("down-fake-url") ) {
+                    isFakeUrlCmds = true;
+                }
+
+                //proj1&2
+                if (isConCmds && (!splitCmd[1].equalsIgnoreCase("all"))) {
                     InetAddress slaveAddr = InetAddress.getByName(splitCmd[1]);
                     slaveIp = slaveAddr.getHostAddress();
                     slaveName = slaveAddr.getHostName();
-                } else{
-                    slaveIp="all" ;
                 }
 
                 //System.out.println ("user input addr:  "+slaveIp+ "; slaveNmae: "+ slaveName) ;
@@ -200,7 +220,7 @@ public class MasterBot {
 
                 //Remove closed connections from slave
                 if ( foundClosedConn==1) {
-                    System.out.println("Remoing closed slave:"+curSlave.ipAddr+" "+curSlave.srcPort);
+                    System.out.println("Removing closed slave:"+curSlave.ipAddr+" "+curSlave.srcPort);
 
                     /*
                     for (Iterator <Host> it= slaveset.iterator();it.hasNext();) {

