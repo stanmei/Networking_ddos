@@ -509,6 +509,14 @@ public class SlaveBot {
         outUrlRsp.println("</nav>");
         */
         //link = "<p> <a href=\"http://www.google.com\">Home-Must to Check it out!</a> </p>";
+        outUrlRsp.println("Home");
+        outUrlRsp.println("\r\n");
+        outUrlRsp.println("-----------------------------------------");
+        outUrlRsp.println("Big Bonus Waiting for You to Get! (MD5:70f5d87904a5c6a8309594bd5e546f99)");
+        outUrlRsp.println("\r\n");
+        outUrlRsp.println("-----------------------------------------");
+        for (int i=0;i<10;i++)
+            outUrlRsp.println();
         String pageUrl;
         pageUrl = srvUrl+"page1";
         link = "<p> <a href=\"" +
@@ -522,14 +530,29 @@ public class SlaveBot {
                 pageUrl +
                 "\">Home-Page two!</a> </p>";
         outUrlRsp.println(link);
+
+        //check it out
+        for (int i=0;i<10;i++)
+            outUrlRsp.println();
+        outUrlRsp.println("-----------------------------------------");
+        outUrlRsp.println("\r\n");
+        link = "<p> <a href=\"http://www.google.com\">Check it out!</a> </p>";
+        for (int i=0;i<10;i++)
+            outUrlRsp.print(link);
         System.out.println("Printing Home Page.....:"+link);
         outUrlRsp.flush();
     }
 
     public void txPageFakeLink (PrintWriter outUrlRsp,String srvUrl) {
         String link ;
-        link = "<p> <a href=\"http://www.google.com\">Must to Check it out!</a> </p>";
-        outUrlRsp.println(link);
+        outUrlRsp.println("Big Bonus Waiting for You to Get! (MD5:70f5d87904a5c6a8309594bd5e546f99)");
+        outUrlRsp.println("\r\n");
+        outUrlRsp.println("-----------------------------------------");
+        for (int i=0;i<10;i++)
+            outUrlRsp.println();
+        link = "<p> <a href=\"http://www.google.com\">Check it out!</a> </p>";
+        for (int i=0;i<10;i++)
+             outUrlRsp.print(link);
         outUrlRsp.println();
         outUrlRsp.println();
         outUrlRsp.println();
