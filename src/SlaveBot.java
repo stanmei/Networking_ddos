@@ -509,10 +509,10 @@ public class SlaveBot {
         outUrlRsp.println("</nav>");
         */
         //link = "<p> <a href=\"http://www.google.com\">Home-Must to Check it out!</a> </p>";
-        outUrlRsp.println("Home");
+        outUrlRsp.println("<h1>BOTHOME</h1>");
         outUrlRsp.println("\r\n");
         outUrlRsp.println("-----------------------------------------");
-        outUrlRsp.println("Big Bonus Waiting for You to Get! (MD5:70f5d87904a5c6a8309594bd5e546f99)");
+        outUrlRsp.println("<h1>Big Bonus Waiting for You to Get! (MD5:70f5d87904a5c6a8309594bd5e546f99)</h1>");
         outUrlRsp.println("\r\n");
         outUrlRsp.println("-----------------------------------------");
         for (int i=0;i<10;i++)
@@ -545,7 +545,9 @@ public class SlaveBot {
 
     public void txPageFakeLink (PrintWriter outUrlRsp,String srvUrl) {
         String link ;
-        outUrlRsp.println("Big Bonus Waiting for You to Get! (MD5:70f5d87904a5c6a8309594bd5e546f99)");
+        outUrlRsp.println("<h1>BOTPAGEFAKE</h1>");
+        outUrlRsp.println("\r\n");
+        outUrlRsp.println("<h1>Big Bonus Waiting for You to Get! (MD5:70f5d87904a5c6a8309594bd5e546f99)</h1>");
         outUrlRsp.println("\r\n");
         outUrlRsp.println("-----------------------------------------");
         for (int i=0;i<10;i++)
